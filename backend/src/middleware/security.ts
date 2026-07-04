@@ -4,7 +4,9 @@ import { rateLimit } from "express-rate-limit";
 import type { RequestHandler } from "express";
 import { corsOrigins, env } from "../config/env.js";
 
-export const helmetMiddleware = (helmet as any)({
+const helmetFn = typeof helmet === "function" ? helmet : (helmet as any).default;
+
+export const helmetMiddleware = helmetFn({
   // Remove X-Powered-By fingerprint
   hidePoweredBy: true,
   // Strict HSTS (1 year; enable once you have TLS in production)
