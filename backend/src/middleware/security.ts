@@ -21,6 +21,8 @@ export const helmetMiddleware = resolveDefault(helmet)({
   ieNoOpen: true,
   // Disable browser XSS filter (modern CSP is the correct control)
   xssFilter: false,
+  // Allow cross-origin reads from the Vercel frontend (default same-origin blocks fetch)
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   // Referrer: only send origin cross-origin
   referrerPolicy: { policy: "strict-origin-when-cross-origin" },
 });
