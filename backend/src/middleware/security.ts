@@ -1,5 +1,5 @@
 import cors from "cors";
-import { default as helmet } from "helmet";
+import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import type { RequestHandler } from "express";
 import { corsOrigins, env } from "../config/env.js";
