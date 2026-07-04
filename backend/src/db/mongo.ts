@@ -30,7 +30,7 @@ export async function connectMongo(): Promise<boolean> {
     try {
       mongooseFn.set("strictQuery", true);
       await mongooseFn.connect(env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 15_000,
         maxPoolSize: 1,
       });
       connected = true;
