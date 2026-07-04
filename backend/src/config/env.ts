@@ -7,7 +7,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   NODE_ENV: z
     .enum(["development", "production", "test"])
-    .default("development"),
+    .catch("production"),
   // ==========================================
   // CORS AND SECURITY CONFIGURATION
   // ==========================================
