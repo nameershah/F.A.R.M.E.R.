@@ -8,34 +8,16 @@
 //   removes both steps — esbuild sees standard ESM with concrete file paths.
 //
 // Build order on Vercel:
-//   1. npm install
-//   2. buildCommand (npm run build / tsc) → creates dist/
+//   1. npm install (+ postinstall → tsc creates dist/)
+//   2. buildCommand (npm run build) — redundant safety net
 //   3. @vercel/node bundles this file + all deps from dist/ and node_modules
 
-let app;
+import { createApp } from "../dist/app.js";
+import { connectMongo } from "../dist/db/mongo.js";
 
-try {
-  const [{ createApp }, { connectMongo }] = await Promise.all([
-    import("../dist/app.js"),
-    import("../dist/db/mongo.js"),
-  ]);
+connectMongo().catch((err) => {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.warn("Serverless: MongoDB connect failed (non-fatal):", msg);
+});
 
-  // Fire-and-forget: connectMongo is intentionally not awaited at module level.
-  // Vercel reuses warm containers; connection is established on the first cold
-  // start and cached. query-log service checks isMongoConnected() before
-  // every write and degrades gracefully when Mongo is absent.
-  connectMongo().catch((err) => {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn("Serverless: MongoDB connect failed (non-fatal):", msg);
-  });
-
-  app = createApp();
-} catch (err) {
-  const detail = err instanceof Error ? err.stack ?? err.message : String(err);
-  console.error("Serverless startup failed:", detail);
-  app = (_req, res) => {
-    res.status(500).json({ error: "Startup failed", detail });
-  };
-}
-
-export default app;
+export default createApp();
