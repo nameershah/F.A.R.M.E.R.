@@ -4,7 +4,6 @@ node_modules/
 # Build output
 dist/
 build/
-index.js
 
 # Environment secrets — NEVER commit these
 .env

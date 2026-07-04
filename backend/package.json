@@ -4,12 +4,13 @@
   "description": "F.A.R.M.E.R. — Futuristic Agriculture & Resource Management Ecosystem Router",
   "type": "module",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "tsx watch src/dev-server.ts",
-    "build": "tsc && node scripts/bundle-api.mjs",
-    "start": "node index.js",
+    "build": "tsc",
+    "vercel-build": "tsc",
+    "start": "node dist/dev-server.js",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -38,7 +39,6 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.0.0",
     "@types/node": "^26.1.0",
-    "esbuild": "^0.25.5",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
