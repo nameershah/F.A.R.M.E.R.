@@ -3,10 +3,6 @@ import { z } from "zod";
 
 loadDotenv();
 
-/**
- * All secrets and tunables come from process.env only.
- * We never hardcode API keys and never echo them in responses or logs.
- */
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   NODE_ENV: z
@@ -35,7 +31,19 @@ const envSchema = z.object({
   DEFAULT_LON: z.coerce.number().default(71.5249),
 });
 
-const parsed = envSchema.safeParse(process.env);
+/** Vercel often stores unset vars as "" — treat those as missing so defaults apply. */
+function envForParse(
+  source: NodeJS.ProcessEnv,
+): Record<string, string | undefined> {
+  return Object.fromEntries(
+    Object.entries(source).map(([key, value]) => [
+      key,
+      value === "" ? undefined : value,
+    ]),
+  );
+}
+
+const parsed = envSchema.safeParse(envForParse(process.env));
 
 if (!parsed.success) {
   // Throw instead of process.exit so that:
