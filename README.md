@@ -151,6 +151,18 @@ These are real constraints documented in the code, not softened for presentation
 
 ---
 
+## Roadmap
+
+The current system focuses on getting the core routing architecture right — deterministic triage, confidence-gated escalation, and real data where it's honestly available. The following are natural next layers on top of that foundation, not yet built:
+
+- **Multilingual support (Urdu, Pashto).** The target user is a farmer in rural Khyber Pakhtunkhwa; English-only interaction is a real adoption barrier. Both Gemini and Groq support multilingual prompting, so this is an extension of the existing advisory and diagnosis agents rather than a new system.
+- **Voice input.** Many smallholder farmers are more comfortable speaking than typing, particularly for describing a problem in detail. A voice-to-text layer ahead of the existing router would let a farmer ask a question the same way they'd ask a person, similar in spirit to conversational assistants like ChatGPT's voice mode.
+- **Land suitability analysis.** Using the same Open-Meteo data already powering the irrigation signal (soil moisture, temperature) cross-referenced against known crop requirements, the system could suggest which crops are viable for a given plot before a farmer plants, rather than only reacting after a problem appears.
+
+Larger ideas — farmer cooperative/group features, a direct farmer-to-buyer marketplace, and multi-month price forecasting — were considered and deliberately excluded from this roadmap. Each is a distinct product with its own scope (trust and payment systems, historical time-series data that does not currently exist in an accessible form for KP mandi prices, logistics coordination) rather than a natural extension of this routing architecture, and are noted here only as acknowledged possible future directions, not committed next steps.
+
+---
+
 ## License
 
 This repository is **not MIT licensed**. It is published under a restrictive all-rights-reserved license — public visibility is for portfolio and hackathon evaluation purposes only. Reproduction, use, or distribution requires explicit written permission from the author. See [`LICENSE`](LICENSE) for full terms.
