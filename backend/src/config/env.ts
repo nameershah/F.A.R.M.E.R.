@@ -32,13 +32,25 @@ const envSchema = z.object({
 });
 
 /** Vercel often stores unset vars as "" — treat those as missing so defaults apply. */
+function cleanEnvValue(value: string | undefined): string | undefined {
+  if (value === undefined || value === "") return undefined;
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
 function envForParse(
   source: NodeJS.ProcessEnv,
 ): Record<string, string | undefined> {
   return Object.fromEntries(
     Object.entries(source).map(([key, value]) => [
       key,
-      value === "" ? undefined : value,
+      cleanEnvValue(value),
     ]),
   );
 }
