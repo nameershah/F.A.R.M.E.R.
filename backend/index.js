@@ -1,5 +1,5 @@
-import { createApp } from "./src/app.js";
-import { connectMongo } from "./src/db/mongo.js";
+import { createApp } from "./dist/app.js";
+import { connectMongo } from "./dist/db/mongo.js";
 
 connectMongo().catch((err) => {
   const msg = err instanceof Error ? err.message : String(err);
