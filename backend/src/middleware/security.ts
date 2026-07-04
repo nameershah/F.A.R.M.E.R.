@@ -1,6 +1,12 @@
 import cors from "cors";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
+import * as rateLimitImport from "express-rate-limit";
+const rateLimit =
+  (rateLimitImport as unknown as { default: typeof rateLimitImport.default }).default ??
+  rateLimitImport.default;
+import * as helmetImport from "helmet";
+const helmet =
+  (helmetImport as unknown as { default: typeof helmetImport.default }).default ??
+  helmetImport.default;
 import type { RequestHandler } from "express";
 import { corsOrigins, env } from "../config/env.js";
 

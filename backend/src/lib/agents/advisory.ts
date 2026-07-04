@@ -5,13 +5,14 @@
 // Errors are caught and returned as farmer-safe messages; this function
 // never throws past the route handler.
 
-import Groq from "groq-sdk";
+import * as GroqImport from "groq-sdk";
+const Groq = (GroqImport as unknown as { default: new (...args: any[]) => any }).default ?? (GroqImport as any);
 import { env } from "../../config/env.js";
 import { withTimeout } from "../security/timeout.js";
 
 // Module-level singleton — created once, reused across all requests.
-let _groqClient: Groq | null = null;
-function getGroqClient(): Groq {
+let _groqClient: InstanceType<typeof Groq> | null = null;
+function getGroqClient(): InstanceType<typeof Groq> {
   if (!_groqClient) {
     _groqClient = new Groq({ apiKey: env.GROQ_API_KEY });
   }
@@ -66,7 +67,7 @@ export async function runAdvisory(
       }),
       12_000,
       "Groq advisory call timed out after 12 s",
-    );
+    ) as { choices: Array<{ message: { content: string | null } }> };
 
     const answer = completion.choices[0]?.message?.content?.trim();
     if (!answer) {
