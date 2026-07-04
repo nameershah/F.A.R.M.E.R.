@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 import { env } from "../config/env.js";
+import { resolveDefault } from "../lib/resolveDefault.js";
+
+const mongooseFn = resolveDefault(mongoose);
 
 let connected = false;
 
@@ -15,8 +18,8 @@ export async function connectMongo(): Promise<boolean> {
   }
 
   try {
-    mongoose.set("strictQuery", true);
-    await mongoose.connect(env.MONGODB_URI, {
+    mongooseFn.set("strictQuery", true);
+    await mongooseFn.connect(env.MONGODB_URI, {
       serverSelectionTimeoutMS: 3000,
     });
     connected = true;
@@ -33,13 +36,13 @@ export async function connectMongo(): Promise<boolean> {
 }
 
 export function isMongoConnected(): boolean {
-  return connected && mongoose.connection.readyState === 1;
+  return connected && mongooseFn.connection.readyState === 1;
 }
 
-mongoose.connection.on("disconnected", () => {
+mongooseFn.connection.on("disconnected", () => {
   connected = false;
 });
 
-mongoose.connection.on("connected", () => {
+mongooseFn.connection.on("connected", () => {
   connected = true;
 });

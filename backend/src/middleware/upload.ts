@@ -1,4 +1,7 @@
 import multer from "multer";
+import { resolveDefault } from "../lib/resolveDefault.js";
+
+const multerFn = resolveDefault(multer);
 
 // ==========================================
 // SECURITY AUDIT: FILE UPLOAD HARDENING (INTEGRITY)
@@ -10,8 +13,8 @@ const ALLOWED_MIME = new Set([
   "image/png",
 ]);
 
-export const upload = multer({
-  storage: multer.memoryStorage(),
+export const upload = multerFn({
+  storage: multerFn.memoryStorage(),
   limits: {
     fileSize: 8 * 1024 * 1024, // 8 MB limit
     files: 1,

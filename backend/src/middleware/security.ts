@@ -3,10 +3,9 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import type { RequestHandler } from "express";
 import { corsOrigins, env } from "../config/env.js";
+import { resolveDefault } from "../lib/resolveDefault.js";
 
-const helmetFn = typeof helmet === "function" ? helmet : (helmet as any).default;
-
-export const helmetMiddleware = helmetFn({
+export const helmetMiddleware = resolveDefault(helmet)({
   // Remove X-Powered-By fingerprint
   hidePoweredBy: true,
   // Strict HSTS (1 year; enable once you have TLS in production)
@@ -26,7 +25,7 @@ export const helmetMiddleware = helmetFn({
   referrerPolicy: { policy: "strict-origin-when-cross-origin" },
 });
 
-export const corsMiddleware = cors({
+export const corsMiddleware = resolveDefault(cors)({
   origin: corsOrigins(),
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

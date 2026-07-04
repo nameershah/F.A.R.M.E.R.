@@ -1,4 +1,5 @@
 import express from "express";
+import { resolveDefault } from "./lib/resolveDefault.js";
 import {
   corsMiddleware,
   helmetMiddleware,
@@ -7,8 +8,10 @@ import { healthRouter } from "./routes/health.js";
 import { logsRouter } from "./routes/logs.js";
 import { queryRouter } from "./routes/query.js";
 
+const expressFn = resolveDefault(express);
+
 export function createApp() {
-  const app = express();
+  const app = expressFn();
 
   app.use(helmetMiddleware);
   app.use(corsMiddleware);
