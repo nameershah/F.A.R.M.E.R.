@@ -14,8 +14,11 @@ async function main() {
   });
 }
 
-main().catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : "unknown error";
-  console.error("Fatal startup error:", message);
-  process.exit(1);
-});
+// Local dev only. Vercel uses backend/index.ts (default export, no listen).
+if (!process.env.VERCEL) {
+  main().catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("Fatal startup error:", message);
+    process.exit(1);
+  });
+}

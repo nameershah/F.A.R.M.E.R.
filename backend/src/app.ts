@@ -10,7 +10,11 @@ import { queryRouter } from "./routes/query.js";
 
 const expressFn = resolveDefault(express);
 
+let cachedApp: ReturnType<typeof expressFn> | undefined;
+
 export function createApp() {
+  if (cachedApp) return cachedApp;
+
   const app = expressFn();
 
   app.use(helmetMiddleware);
@@ -45,5 +49,6 @@ export function createApp() {
     },
   );
 
+  cachedApp = app;
   return app;
 }
