@@ -1,0 +1,55 @@
+import { config as loadDotenv } from "dotenv";
+import { z } from "zod";
+
+loadDotenv();
+
+/**
+ * All secrets and tunables come from process.env only.
+ * We never hardcode API keys and never echo them in responses or logs.
+ */
+const envSchema = z.object({
+  PORT: z.coerce.number().int().positive().default(3001),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  // ==========================================
+  // CORS AND SECURITY CONFIGURATION
+  // ==========================================
+  // CORS_ALLOWED_ORIGIN defines which frontend origin is allowed to send requests
+  // to this API. It defaults to port 5173 but can be overridden (e.g., to 5174)
+  // in backend/.env to prevent cross-origin resource sharing failures.
+  CORS_ALLOWED_ORIGIN: z.string().default("http://localhost:5173"),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
+  GEMINI_API_KEY: z.string().optional().default(""),
+  GROQ_API_KEY: z.string().optional().default(""),
+  MONGODB_URI: z.string().optional().default(""),
+  // ==========================================
+  // CONFIDENTIALITY: LOGS ACCESS KEY
+  // ==========================================
+  // Protects GET /api/logs from unauthenticated public access.
+  // Set to any strong random string. If unset, the logs endpoint
+  // returns 403 for all callers — fail-closed by design.
+  LOGS_API_KEY: z.string().optional().default(""),
+  DEFAULT_LAT: z.coerce.number().default(34.0151),
+  DEFAULT_LON: z.coerce.number().default(71.5249),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  console.error("Invalid environment configuration:", parsed.error.flatten());
+  process.exit(1);
+}
+
+export const env = parsed.data;
+
+// ==========================================
+// CORS ALLOWED ORIGINS RESOLVER
+// ==========================================
+// Parses the CORS_ALLOWED_ORIGIN string (comma-separated list) or returns wildcard boolean.
+export function corsOrigins(): string[] | boolean {
+  const raw = env.CORS_ALLOWED_ORIGIN.trim();
+  if (raw === "*") return true;
+  return raw.split(",").map((o) => o.trim()).filter(Boolean);
+}
