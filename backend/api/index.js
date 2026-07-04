@@ -12,8 +12,8 @@
 //   2. buildCommand (npm run build / tsc) → creates dist/
 //   3. @vercel/node bundles this file + all deps from dist/ and node_modules
 
-import { createApp } from '../dist/src/app.js';
-import { connectMongo } from '../dist/src/db/mongo.js';
+import { createApp } from '../dist/app.js';
+import { connectMongo } from '../dist/db/mongo.js';
 
 // Fire-and-forget: connectMongo is intentionally not awaited at module level.
 // Vercel reuses warm containers; connection is established on the first cold
