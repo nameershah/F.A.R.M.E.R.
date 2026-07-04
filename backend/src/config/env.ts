@@ -38,8 +38,13 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error("Invalid environment configuration:", parsed.error.flatten());
-  process.exit(1);
+  // Throw instead of process.exit so that:
+  // - Local: caught by main().catch() which logs and exits cleanly.
+  // - Serverless (Vercel): the runtime catches the module-load error
+  //   and returns a 500 without killing the underlying container.
+  throw new Error(
+    `Invalid environment configuration: ${JSON.stringify(parsed.error.flatten())}`,
+  );
 }
 
 export const env = parsed.data;
