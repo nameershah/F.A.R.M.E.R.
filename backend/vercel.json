@@ -4,8 +4,7 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 60,
-      "includeFiles": "dist/**"
+      "maxDuration": 60
     }
   },
   "rewrites": [
