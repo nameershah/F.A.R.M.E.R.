@@ -1,14 +1,11 @@
+import { createRequire } from "node:module";
 import cors from "cors";
-import * as rateLimitImport from "express-rate-limit";
-const rateLimit =
-  (rateLimitImport as unknown as { default: typeof rateLimitImport.default }).default ??
-  rateLimitImport.default;
-import * as helmetImport from "helmet";
-const helmet =
-  (helmetImport as unknown as { default: typeof helmetImport.default }).default ??
-  helmetImport.default;
 import type { RequestHandler } from "express";
 import { corsOrigins, env } from "../config/env.js";
+
+const require = createRequire(import.meta.url);
+const helmet = require("helmet") as typeof import("helmet").default;
+const rateLimit = require("express-rate-limit") as typeof import("express-rate-limit").default;
 
 export const helmetMiddleware = helmet({
   // Remove X-Powered-By fingerprint
