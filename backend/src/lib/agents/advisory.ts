@@ -57,16 +57,16 @@ export async function runAdvisory(
     // leaving the HTTP request hanging indefinitely.
     const completion = await withTimeout(
       groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        model: env.GROQ_MODEL,
         temperature: 0.4,
-        max_tokens: 400,
+        max_tokens: 280,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
         ],
       }),
-      12_000,
-      "Groq advisory call timed out after 12 s",
+      10_000,
+      "Groq advisory call timed out after 10 s",
     ) as { choices: Array<{ message: { content: string | null } }> };
 
     const answer = completion.choices[0]?.message?.content?.trim();

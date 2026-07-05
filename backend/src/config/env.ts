@@ -19,6 +19,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
   GEMINI_API_KEY: z.string().optional().default(""),
   GROQ_API_KEY: z.string().optional().default(""),
+  /** Faster 8B model by default; override with llama-3.3-70b-versatile for quality. */
+  GROQ_MODEL: z.string().default("llama-3.1-8b-instant"),
   MONGODB_URI: z.string().optional().default(""),
   // ==========================================
   // CONFIDENTIALITY: LOGS ACCESS KEY

@@ -1,9 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 
 interface UploadCardProps {
   onSubmitting: (text: string, file: File | null) => Promise<void>;
   isLoading: boolean;
 }
+
+const LOADING_HINTS = [
+  "Routing your question to the right agent…",
+  "Checking weather and market keywords…",
+  "Calling the vision model for crop analysis…",
+  "Generating practical advice…",
+  "Almost there — AI models can take 15–30 seconds…",
+];
 
 export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading }) => {
   const [text, setText] = useState<string>("");
@@ -11,7 +20,20 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
   const [fileError, setFileError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState<boolean>(false);
+  const [loadingHintIndex, setLoadingHintIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const appendTranscript = useCallback((spoken: string) => {
+    setText((prev) => (prev.trim() ? `${prev.trim()} ${spoken}` : spoken));
+  }, []);
+
+  const {
+    supported: speechSupported,
+    listening,
+    error: speechError,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition(appendTranscript);
 
   useEffect(() => {
     if (!file) {
@@ -26,6 +48,17 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
     };
   }, [file]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingHintIndex(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setLoadingHintIndex((i) => (i + 1) % LOADING_HINTS.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [isLoading]);
+
   const validateAndSetFile = (selectedFile: File | null) => {
     setFileError(null);
     if (!selectedFile) {
@@ -33,7 +66,6 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
       return;
     }
 
-    // Integrity: accept only image/jpeg and image/png
     const validTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!validTypes.includes(selectedFile.type)) {
       setFileError("Invalid format. Please upload a JPEG or PNG image.");
@@ -42,8 +74,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
       return;
     }
 
-    // Integrity: cap size at 8MB
-    const maxSize = 8 * 1024 * 1024; // 8MB
+    const maxSize = 8 * 1024 * 1024;
     if (selectedFile.size > maxSize) {
       setFileError("File too large. Maximum size is 8MB.");
       setFile(null);
@@ -88,6 +119,15 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
     }
   };
 
+  const handleMicClick = () => {
+    if (isLoading) return;
+    if (listening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading || (!text.trim() && !file)) return;
@@ -99,8 +139,8 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    } catch (err) {
-      // Retain inputs on error so the farmer does not lose their typed question
+    } catch {
+      // Retain inputs on error
     }
   };
 
@@ -116,7 +156,6 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
           Input Channel
         </h2>
         
-        {/* Drag-and-Drop Crop leaf image upload */}
         <div
           onDragEnter={handleDrag}
           onDragOver={handleDrag}
@@ -140,7 +179,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
           {previewUrl ? (
             <div 
               className="flex flex-col items-center gap-3.5 w-full"
-              onClick={(e) => e.stopPropagation()} // Stop click propagation to input upload trigger
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="relative border border-white/10 max-h-48 overflow-hidden rounded-lg bg-black/40 flex items-center justify-center p-1.5">
                 <img 
@@ -189,7 +228,6 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
           )}
         </div>
 
-        {/* Validation Errors */}
         {fileError && (
           <div className="mt-2 text-xs text-red-400 font-sans border-l-2 border-red-500 pl-2">
             {fileError}
@@ -198,22 +236,52 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
       </div>
 
       <div>
-        <h2 className="font-mono text-[10px] text-slate-500 uppercase tracking-wider mb-2.5 font-semibold">
-          Context Query
-        </h2>
+        <div className="flex items-center justify-between mb-2.5">
+          <h2 className="font-mono text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+            Context Query
+          </h2>
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={handleMicClick}
+              disabled={isLoading}
+              title={listening ? "Stop listening" : "Speak your question"}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[9px] uppercase tracking-wider font-semibold transition-all border ${
+                listening
+                  ? "bg-red-500/20 border-red-400/40 text-red-300 animate-pulse"
+                  : "bg-white/5 border-white/10 text-slate-400 hover:text-sunset-orange hover:border-sunset-orange/30"
+              } ${isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+              {listening ? "Listening…" : "Mic"}
+            </button>
+          )}
+        </div>
         <textarea
           rows={3}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Or ask a question, like local prices, weather conditions, or irrigation tips"
+          placeholder="Or ask a question — type, or tap Mic to speak (prices, weather, irrigation)"
           className="w-full glass-input rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none resize-none font-sans leading-relaxed"
         />
+        {speechError && (
+          <p className="mt-1.5 text-[10px] text-amber-400/90 font-sans border-l-2 border-amber-500/50 pl-2">
+            {speechError}
+          </p>
+        )}
       </div>
 
       <button
         type="submit"
         disabled={isSubmitDisabled}
-        className={`w-full py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-wider font-bold flex items-center justify-center gap-2 transition-all duration-200 ${
+        className={`w-full py-2.5 rounded-xl font-mono text-[11px] uppercase tracking-wider font-bold flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
           isSubmitDisabled
             ? "bg-white/5 text-slate-500 border border-white/5 cursor-not-allowed"
             : "bg-sunset-orange hover:bg-sunset-orange/90 text-slate-950 shadow-md cursor-pointer active:scale-[0.98]"
@@ -221,26 +289,31 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
       >
         {isLoading ? (
           <>
-            <svg 
-              className="animate-spin h-3.5 w-3.5" 
-              fill="none" 
-              viewBox="0 0 24 24"
-            >
-              <circle 
-                className="opacity-25" 
-                cx="12" 
-                cy="12" 
-                r="10" 
-                stroke="currentColor" 
-                strokeWidth="3"
-              />
-              <path 
-                className="opacity-75" 
-                fill="currentColor" 
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Routing Query...
+            <span className="flex items-center gap-2">
+              <svg 
+                className="animate-spin h-3.5 w-3.5" 
+                fill="none" 
+                viewBox="0 0 24 24"
+              >
+                <circle 
+                  className="opacity-25" 
+                  cx="12" 
+                  cy="12" 
+                  r="10" 
+                  stroke="currentColor" 
+                  strokeWidth="3"
+                />
+                <path 
+                  className="opacity-75" 
+                  fill="currentColor" 
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Routing Query…
+            </span>
+            <span className="text-[9px] font-normal normal-case tracking-normal opacity-80 max-w-[90%] text-center leading-snug">
+              {LOADING_HINTS[loadingHintIndex]}
+            </span>
           </>
         ) : (
           "Run Diagnostics"

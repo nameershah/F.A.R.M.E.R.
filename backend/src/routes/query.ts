@@ -11,6 +11,7 @@ import { queryRateLimiter } from "../middleware/security.js";
 import { upload } from "../middleware/upload.js";
 import { validateQueryRequest } from "../middleware/validate.js";
 import { logQueryAsync } from "../services/queryLog.js";
+import { env } from "../config/env.js";
 import type { QueryResponse } from "../types/index.js";
 
 export const queryRouter = Router();
@@ -60,21 +61,14 @@ queryRouter.post(
       if (route === "diagnosis" && req.file) {
         trace.push("diagnosis: calling Gemini (gemini-2.5-flash) with image");
 
-        // Run diagnosis and advisory concurrently — advisory only needs the
-        // diagnosis summary, not its confidence, so both can start in parallel.
-        // On the happy path this saves the full advisory round-trip (~3–12 s)
-        // from the critical path by overlapping it with the Gemini vision call.
-        const [diagnosis, earlyAdvice] = await Promise.all([
-          runDiagnosis(
-            {
-              buffer: req.file.buffer,
-              mimeType: req.file.mimetype,
-              originalName: req.file.originalname,
-            },
-            text,
-          ),
-          runAdvisory(text),   // runs in parallel; used only if gate passes
-        ]);
+        const diagnosis = await runDiagnosis(
+          {
+            buffer: req.file.buffer,
+            mimeType: req.file.mimetype,
+            originalName: req.file.originalname,
+          },
+          text,
+        );
 
         diagnosisConfidence = diagnosis.confidence;
         trace.push(
@@ -108,9 +102,9 @@ queryRouter.post(
           });
         }
 
-        // Advisory ran concurrently — use it directly (already awaited above).
-        trace.push("advisory: enriching diagnosis with practical advice (Groq) [parallel]");
-        answer = `${diagnosisSummary}\n\nAdvice: ${earlyAdvice}`;
+        trace.push(`advisory: enriching diagnosis (Groq ${env.GROQ_MODEL})`);
+        const advice = await runAdvisory(text, diagnosisSummary);
+        answer = `${diagnosisSummary}\n\nAdvice: ${advice}`;
         trace.push("advisory: complete");
 
         return respond(res, {
@@ -137,7 +131,7 @@ queryRouter.post(
         answer = await runWeatherMarket(text);
         trace.push("weather_market: tools complete");
       } else {
-        trace.push("advisory: calling Groq (llama-3.3-70b-versatile)");
+        trace.push(`advisory: calling Groq (${env.GROQ_MODEL})`);
         answer = await runAdvisory(text);
         trace.push("advisory: complete");
       }
