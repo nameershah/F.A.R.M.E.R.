@@ -23,8 +23,10 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const appendTranscript = useCallback((spoken: string) => {
-    setText((prev) => (prev.trim() ? `${prev.trim()} ${spoken}` : spoken));
+  const appendTranscript = useCallback((sessionText: string, baseText: string) => {
+    if (!sessionText) return;
+    const base = baseText.trim();
+    setText(base ? `${base} ${sessionText}` : sessionText);
   }, []);
 
   const {
@@ -124,7 +126,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onSubmitting, isLoading 
     if (listening) {
       stopListening();
     } else {
-      startListening();
+      startListening(text);
     }
   };
 
