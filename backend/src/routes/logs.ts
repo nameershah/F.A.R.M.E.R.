@@ -1,8 +1,17 @@
+import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { getRecentLogs } from "../services/queryLog.js";
 import { env } from "../config/env.js";
 
 export const logsRouter = Router();
+
+function safeKeyMatch(provided: string, expected: string): boolean {
+  if (!provided || !expected) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 // ==========================================
 // SECURITY AUDIT: LOGS ENDPOINT AUTH (CONFIDENTIALITY)
@@ -24,7 +33,7 @@ logsRouter.get("/", async (req, res) => {
     ? authHeader.slice(7).trim()
     : "";
 
-  if (!provided || provided !== key) {
+  if (!safeKeyMatch(provided, key)) {
     res.status(403).json({ error: "Forbidden: invalid or missing API key." });
     return;
   }

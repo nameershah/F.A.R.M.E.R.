@@ -17,7 +17,9 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.vercel*
 
 # Build artefacts
 dist/
 build/
+.vercel

@@ -20,7 +20,11 @@ try {
   console.error("Serverless startup failed:", detail);
   app = expressFn();
   app.all("*", (_req, res) => {
-    res.status(500).json({ error: "Startup failed", detail });
+    const body: { error: string; detail?: string } = { error: "Startup failed" };
+    if (process.env.NODE_ENV !== "production") {
+      body.detail = detail;
+    }
+    res.status(500).json(body);
   });
 }
 
